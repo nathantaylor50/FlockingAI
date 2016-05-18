@@ -2,55 +2,79 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class World : MonoBehaviour {
+public class World : MonoBehaviour
+{
 
-	public Transform agentPrefab;
+    public Transform agentPrefab;       // agent template
+    public int nAgents;                 // number of desired agents
+    public List<Agent> agents;          // reference to all agents
+    public List<Predator> predators;    // reference to all predators
+    public float bound;                 // world bounds
+    public float spawnR;                // spawning radius
 
-	public int nAgents;
 
-	public List<Agent> agents;
+    void Start()
+    {
+        // init
 
-	public float bound;
+        agents = new List<Agent>();
+        spawn(agentPrefab, nAgents);
 
-	public float spawnR;
+        agents.AddRange(FindObjectsOfType<Agent>());
+        predators.AddRange(FindObjectsOfType<Predator>());
 
-	void Start () {
+    }
 
-		agents = new List<Agent>();
-		spawn(agentPrefab, nAgents);
+    void spawn(Transform prefab, int n)
+    {
+        for (int i = 0; i < n; i++)
+        {
 
-		agents.AddRange(FindObjectsOfType<Agent>());
-	
-	}
-	
-	void Update () {
-	
-	}
+            Instantiate(prefab,
+                        new Vector3(Random.Range(-spawnR, spawnR), 0, Random.Range(-spawnR, spawnR)),
+                          Quaternion.identity);
+        }
+    }
 
-	void spawn(Transform prefab, int n){
+    public List<Agent> getNeigh(Agent agent, float radius)
+    {
+        // get all neighbours of agent inside a given radius
 
-		for(int i=0; i< n; i++){
+        // iterating all agents and doing distance checks is ineficient
+        // for eficiency you should partition the space!
 
-			Instantiate(prefab,
-			            new Vector3(Random.Range(-spawnR,spawnR),0, Random.Range(-spawnR,spawnR)),
-	                      Quaternion.identity);
-		}
-	}
+        List<Agent> r = new List<Agent>();
 
-	public List<Agent> getNeigh(Agent agent, float radius){
+        foreach (var otherAgent in agents)
+        {
 
-		List<Agent> r = new List<Agent>();
+            if (otherAgent == agent)
+                continue;
 
-		foreach(var otherAgent in agents){
+            if (Vector3.Distance(agent.x, otherAgent.x) <= radius)
+            {
+                r.Add(otherAgent);
+            }
+        }
 
-			if(otherAgent == agent)
-				continue;
+        return r;
+    }
 
-			if(Vector3.Distance(agent.x, otherAgent.x) <= radius){
-				r.Add(otherAgent);
-			}
-		}
+    public List<Predator> getPredators(Agent agent, float radius)
+    {
+        // get all predators of agent inside a given radius
 
-		return r;
-	}
+        List<Predator> r = new List<Predator>();
+
+        foreach (var predator in predators)
+        {
+
+            if (Vector3.Distance(agent.x, predator.x) <= radius)
+            {
+                r.Add(predator);
+            }
+        }
+
+        return r;
+    }
 }
